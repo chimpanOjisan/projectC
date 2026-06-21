@@ -1,0 +1,5 @@
+# Antigravity Project Configuration
+project_name: projectC
+workspace_root: C:/Users/Chimpanzee/Desktop/projectC
+description: "ちんぱんのちんぱんによるちんぱんのためのりぽじとり"
+rules_file: .agents/AGENTS.md
