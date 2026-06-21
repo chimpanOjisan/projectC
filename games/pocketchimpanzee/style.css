@@ -1,0 +1,587 @@
+/* Reset & Typography */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background: linear-gradient(135deg, #1e2022 0%, #121314 100%);
+  color: #fff;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Console Wrapper & Container */
+.console-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+  width: 100%;
+  max-width: 1050px;
+}
+
+/* Virtual Game Boy Console Body (Landscape Mode) */
+.console-body {
+  width: 100%;
+  height: 520px;
+  background-color: #c2c5c6; /* Classic Game Boy Gray */
+  border-radius: 20px 20px 20px 20px;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.4),
+    inset -3px -3px 5px rgba(0, 0, 0, 0.3),
+    0 25px 50px rgba(0, 0, 0, 0.6),
+    0 10px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #a3a6a7;
+  transform: rotateX(1deg);
+  padding: 10px 20px;
+}
+
+/* Side Control Ribbons */
+.ribbon {
+  width: 160px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 30px 0;
+  position: relative;
+  z-index: 20;
+}
+
+.left-ribbon {
+  border-right: 3px double #a3a6a7;
+}
+
+.right-ribbon {
+  border-left: 3px double #a3a6a7;
+}
+
+/* Center Section (Screen) */
+.center-screen {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  z-index: 10;
+}
+
+/* Screen Border / Dark Gray Area */
+.screen-border {
+  width: 100%;
+  height: 400px;
+  background-color: #6d7071; /* Dark Gray Screen Bezel */
+  border-radius: 8px;
+  border-bottom: 15px solid #5a5c5d;
+  box-shadow: 
+    inset 0 4px 6px rgba(0, 0, 0, 0.4),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.1);
+  padding: 15px 35px 12px 35px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Screen Top Stripe (Blue & Red lines) */
+.screen-border::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, #8b1e3f 0%, #8b1e3f 30%, #2f4368 30%, #2f4368 100%);
+}
+
+/* Power Indicator LED */
+.screen-indicator {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.power-led {
+  width: 10px;
+  height: 10px;
+  background-color: #301010; /* Off-Red */
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.power-led.on {
+  background-color: #ff3b30; /* Bright Red Power LED */
+  box-shadow: 0 0 10px #ff3b30, inset 1px 1px 1px rgba(255,255,255,0.6);
+}
+
+.power-label {
+  font-size: 6px;
+  color: #c2c5c6;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* LCD Game Screen (Wide/Large) */
+.screen {
+  width: 100%;
+  height: 100%;
+  background-color: #8b956d; /* Classic Game Boy Green-Gray Screen */
+  box-shadow: inset 4px 4px 6px rgba(0, 0, 0, 0.6);
+  border: 4px solid #333;
+  position: relative;
+  overflow: hidden;
+  color: #0f380f; /* Original GB Dark Green Text */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CRT Screen Scanlines effect */
+.screen::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 10;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Boot / Power On Overlay */
+.boot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #8b956d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  cursor: pointer;
+  animation: overlay-glow 2s infinite alternate;
+}
+
+@keyframes overlay-glow {
+  0% { background-color: #8b956d; }
+  100% { background-color: #929d74; }
+}
+
+.boot-text {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #0f380f;
+  animation: blink 1.5s infinite;
+}
+
+.screen-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  position: relative;
+}
+
+.hide {
+  display: none !important;
+}
+
+/* Logo Animation (Game Boy Boot style) */
+.logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+}
+
+.logo-text {
+  font-size: 14px; /* Larger Text for Large Screen */
+  color: #0f380f;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  animation: logo-drop 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes logo-drop {
+  0% {
+    transform: translateY(-220px);
+  }
+  60% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Subtitle and Press Start */
+.start-container {
+  position: absolute;
+  bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.press-start-text {
+  font-size: 12px;
+  margin-bottom: 20px;
+  color: #0f380f;
+  animation: blink 0.8s steps(2, start) infinite;
+}
+
+.trademark-text {
+  font-size: 8px;
+  color: #306230;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Success Screen (Verification Screen) */
+.success-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 10px;
+  text-align: center;
+  background-color: #8b956d;
+}
+
+.success-title {
+  font-size: 16px;
+  color: #0f380f;
+  border-bottom: 3px solid #0f380f;
+  padding-bottom: 6px;
+  width: 90%;
+  margin-top: 5px;
+}
+
+.success-msg {
+  font-size: 9px;
+  color: #306230;
+  line-height: 1.5;
+  margin: 5px 0;
+}
+
+.counter-display {
+  font-size: 42px; /* Bigger Counter */
+  color: #0f380f;
+  font-weight: bold;
+  margin: 5px 0;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.4);
+}
+
+.screen-btn {
+  background-color: #306230;
+  color: #8b956d;
+  border: 2px solid #0f380f;
+  padding: 10px 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  cursor: pointer;
+  box-shadow: 2px 3px 0px #0f380f;
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+
+.screen-btn:active {
+  transform: translate(2px, 3px);
+  box-shadow: 0px 0px 0px #0f380f;
+}
+
+.instructions-text {
+  font-size: 7px;
+  color: #306230;
+  margin-top: 5px;
+}
+
+/* Console Branding text below screen */
+.brand-text {
+  color: #353a55; /* Slate blue */
+  font-size: 13px;
+  font-style: italic;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-top: 15px;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
+}
+
+/* D-Pad Layout inside left ribbon */
+.dpad-container {
+  width: 90px;
+  height: 90px;
+  position: relative;
+}
+
+.dpad {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Tactile Cross */
+.dpad-btn {
+  background-color: #2e2e2e;
+  position: absolute;
+  box-shadow: 
+    inset 1px 1px 1px rgba(255,255,255,0.2),
+    inset -1px -1px 1px rgba(0,0,0,0.5),
+    1px 3px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.dpad-btn:active {
+  background-color: #1e1e1e;
+  box-shadow: 
+    inset -1px -1px 1px rgba(255,255,255,0.1),
+    inset 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.dpad-btn.up {
+  width: 30px;
+  height: 35px;
+  top: 0;
+  left: 30px;
+  border-radius: 4px 4px 0 0;
+}
+
+.dpad-btn.right {
+  width: 35px;
+  height: 30px;
+  top: 30px;
+  right: 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.dpad-btn.down {
+  width: 30px;
+  height: 35px;
+  bottom: 0;
+  left: 30px;
+  border-radius: 0 0 4px 4px;
+}
+
+.dpad-btn.left {
+  width: 35px;
+  height: 30px;
+  top: 30px;
+  left: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.dpad-center {
+  width: 30px;
+  height: 30px;
+  background-color: #2e2e2e;
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  z-index: 5;
+}
+
+/* Center Indent Circle */
+.dpad-center::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #222;
+  top: 8px;
+  left: 8px;
+  box-shadow: inset 1px 1px 1px rgba(0,0,0,0.6);
+}
+
+/* Action Buttons A & B Layout inside right ribbon */
+.action-buttons-container {
+  width: 120px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-buttons {
+  width: 120px;
+  height: 55px;
+  background-color: #b2b4b5; /* Indented panel */
+  border-radius: 30px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 5px;
+  transform: rotate(-28deg);
+  box-shadow: 
+    inset -1px -1px 1px rgba(255,255,255,0.4),
+    inset 1px 2px 2px rgba(0,0,0,0.2),
+    0px 2px 3px rgba(0,0,0,0.15);
+}
+
+.action-btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.action-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #a92044; /* Dark Maroon/Magenta Button */
+  border: 1px solid #73122c;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 
+    inset 1px 1px 1px rgba(255,255,255,0.3),
+    0px 3px 5px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transform: rotate(28deg); /* Cancel out parent rotation for text */
+}
+
+.action-btn:active {
+  background-color: #8c1634;
+  box-shadow: 
+    inset -1px -1px 1px rgba(255,255,255,0.2),
+    inset 1px 1px 3px rgba(0,0,0,0.7),
+    0px 1px 1px rgba(0,0,0,0.2);
+  transform: rotate(28deg) translateY(2px);
+}
+
+/* Menu Buttons Select & Start at the bottom of Ribbons */
+.menu-btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.menu-btn {
+  width: 50px;
+  height: 12px;
+  background-color: #7b7e80; /* Rubber buttons */
+  border-radius: 10px;
+  box-shadow: 
+    inset 1px 1px 1px rgba(255,255,255,0.2),
+    0 3px 4px rgba(0,0,0,0.3);
+  transform: rotate(-28deg);
+  cursor: pointer;
+}
+
+.menu-btn:active {
+  background-color: #646768;
+  box-shadow: 
+    inset 1px 1px 2px rgba(0,0,0,0.6),
+    0 1px 1px rgba(0,0,0,0.1);
+  transform: rotate(-28deg) translateY(1px);
+}
+
+.menu-label {
+  font-size: 7px;
+  color: #353a55;
+  font-weight: bold;
+  margin-top: 15px;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive / Adaptability */
+@media (max-width: 800px) {
+  .console-body {
+    flex-direction: column;
+    height: auto;
+    width: 380px;
+    padding: 20px;
+    border-radius: 15px;
+  }
+  
+  .ribbon {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 15px 0;
+    border: none;
+  }
+  
+  .left-ribbon {
+    order: 2;
+    border-bottom: 2px solid #a3a6a7;
+  }
+  
+  .center-screen {
+    order: 1;
+    width: 100%;
+    padding: 10px 0;
+  }
+  
+  .right-ribbon {
+    order: 3;
+  }
+  
+  .screen-border {
+    height: 240px;
+  }
+  
+  .logo-text {
+    font-size: 9px;
+  }
+  
+  .press-start-text {
+    font-size: 9px;
+  }
+  
+  .success-title {
+    font-size: 11px;
+  }
+  
+  .counter-display {
+    font-size: 28px;
+  }
+}
