@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タイピング練習ソフト - TYPING MASTER</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-typed: #38bdf8;
+      --key-bg: #334155;
+      --key-text: #e2e8f0;
+      --key-target: #f59e0b;
+      --key-active: #ef4444;
+      --key-miss: #dc2626;
+      --key-correct: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 20px;
+      overflow-x: hidden;
+    }
+
+    /* ヘッダー・スコアエリア */
+    header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #93c5fd;
+      text-shadow: 0 0 16px rgba(147, 197, 253, 0.4);
+      margin-bottom: 10px;
+    }
+
+    /* モード選択タブ */
+    .mode-selector {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .mode-btn {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn:hover {
+      background: #334155;
+      color: #f8fafc;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      justify-content: center;
+    }
+
+    .stat-val {
+      font-weight: bold;
+      color: #38bdf8;
+      font-size: 1.1rem;
+    }
+
+    /* メインタイピングディスプレイ */
+    .typing-container {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 40px 50px;
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      margin: 16px 0;
+      overflow: hidden;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* 正解時の波紋エフェクト */
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.8) 0%, rgba(56, 189, 248, 0) 70%);
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      animation: ripple 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes ripple {
+      0% {
+        width: 0px;
+        height: 0px;
+        opacity: 0.9;
+      }
+      100% {
+        width: 700px;
+        height: 700px;
+        opacity: 0;
+      }
+    }
+
+    .word-category {
+      font-size: 0.85rem;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .word-meaning {
+      font-size: 1.35rem;
+      color: #f1f5f9;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      min-height: 1.8em;
+      font-weight: 600;
+    }
+
+    .word-meaning .md-preview {
+      display: inline-block;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 4px 14px;
+      color: #fef08a;
+      font-family: 'Consolas', monospace;
+    }
+
+    .word-display {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      position: relative;
+      z-index: 2;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .char-typed {
+      color: var(--text-typed);
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    }
+
+    .char-current {
+      color: #fbbf24;
+      text-decoration: underline;
+      text-underline-offset: 8px;
+      text-decoration-thickness: 4px;
+      animation: blinkCursor 1s infinite;
+      background: rgba(245, 158, 11, 0.15);
+      border-radius: 4px;
+    }
+
+    /* 空白文字の可視化 */
+    .char-space-marker {
+      display: inline-block;
+      min-width: 14px;
+      border-bottom: 2px dashed rgba(245, 158, 11, 0.6);
+    }
+
+    @keyframes blinkCursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    .char-untyped {
+      color: #475569;
+    }
+
+    /* 下部バーチャルキーボード */
+    .keyboard-wrapper {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #1e293b;
+      padding: 18px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .keyboard-row {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .key {
+      background: var(--key-bg);
+      color: var(--key-text);
+      font-family: 'Consolas', monospace;
+      font-size: 1rem;
+      font-weight: 600;
+      height: 46px;
+      min-width: 42px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 0 #1e293b, 0 5px 8px rgba(0, 0, 0, 0.3);
+      transition: background 0.08s ease, transform 0.08s ease, border-color 0.1s ease;
+      position: relative;
+    }
+
+    /* 特殊キーの幅 */
+    .key-backspace { min-width: 78px; font-size: 0.8rem; }
+    .key-tab { min-width: 56px; font-size: 0.8rem; }
+    .key-caps { min-width: 66px; font-size: 0.8rem; }
+    .key-enter { min-width: 80px; font-size: 0.8rem; }
+    .key-shift { min-width: 90px; font-size: 0.8rem; }
+    .key-space { flex-grow: 1; max-width: 280px; }
+
+    /* ホームポジション突起（FとJ） */
+    .key.home-key::after {
+      content: "";
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 3px;
+      background-color: #38bdf8;
+      border-radius: 2px;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+    }
+
+    /* 次に入力すべき目標キー（イエロー枠・強調） */
+    .key.target {
+      background: #78350f !important;
+      color: #fef08a !important;
+      border: 2px solid var(--key-target);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.6), 0 4px 0 #451a03 !important;
+      transform: translateY(-2px);
+    }
+
+    /* 通常の押下時フラッシュ（一瞬） */
+    .key.pressed-active {
+      background: var(--key-active) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.8), 0 1px 0 #7f1d1d !important;
+      transform: translateY(3px) !important;
+    }
+
+    /* ★ミスしたキー：正解を打つまで赤く残り続けるスタイル */
+    .key.miss-persistent {
+      background: var(--key-miss) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 22px rgba(220, 38, 38, 0.95), 0 2px 0 #7f1d1d !important;
+      border: 2px solid #fca5a5 !important;
+      transform: translateY(2px) !important;
+      animation: pulseMiss 1.2s infinite alternate;
+    }
+
+    @keyframes pulseMiss {
+      0% { box-shadow: 0 0 12px rgba(220, 38, 38, 0.6); }
+      100% { box-shadow: 0 0 26px rgba(239, 68, 68, 1); }
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>TYPING MASTER</h1>
+
+    <!-- スタート画面：モード選択 -->
+    <div class="mode-selector">
+      <button class="mode-btn active" id="btn-mode-normal">通常英単語モード</button>
+      <button class="mode-btn" id="btn-mode-markdown">Markdown＋日本語モード (100問)</button>
+    </div>
+
+    <div class="stats-bar">
+      <div>モード: <span id="current-mode-label" class="stat-val">通常英単語</span></div>
+      <div>進捗: <span id="progress-val" class="stat-val">1 / 25</span></div>
+      <div>スコア: <span id="score" class="stat-val">0</span></div>
+      <div>ミス: <span id="miss-count" class="stat-val">0</span></div>
+      <div>正確率: <span id="accuracy" class="stat-val">100%</span></div>
+    </div>
+  </header>
+
+  <!-- タイピング対象表示エリア -->
+  <main class="typing-container" id="typing-area">
+    <div class="word-category" id="word-category">NORMAL</div>
+    <div class="word-meaning" id="word-meaning">準備中...</div>
+    <div class="word-display" id="word-display">
+      <span class="char-current">START</span>
+    </div>
+  </main>
+
+  <!-- バーチャルキーボード -->
+  <div class="keyboard-wrapper">
+    <div class="keyboard" id="keyboard">
+      <!-- JavaScriptで動的生成 -->
+    </div>
+    <div class="footer-note">
+      次に打つキーは<span style="color:#f59e0b; font-weight:bold;">黄色</span>、間違えたキーは<span style="color:#ef4444; font-weight:bold;">次に正解するまで赤色で残り続けます</span>。
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. 通常英単語リスト (25単語)
+    // ==========================================
+    const NORMAL_WORD_LIST = [
+      { text: "apple", meaning: "りんご", category: "単語" },
+      { text: "banana", meaning: "バナナ", category: "単語" },
+      { text: "cat", meaning: "ねこ", category: "単語" },
+      { text: "dog", meaning: "いぬ", category: "単語" },
+      { text: "elephant", meaning: "ぞう", category: "単語" },
+      { text: "flower", meaning: "花", category: "単語" },
+      { text: "guitar", meaning: "ギター", category: "単語" },
+      { text: "happy", meaning: "幸せな", category: "単語" },
+      { text: "island", meaning: "島", category: "単語" },
+      { text: "jungle", meaning: "密林", category: "単語" },
+      { text: "keyboard", meaning: "キーボード", category: "単語" },
+      { text: "lemon", meaning: "レモン", category: "単語" },
+      { text: "mountain", meaning: "山", category: "単語" },
+      { text: "notebook", meaning: "ノート", category: "単語" },
+      { text: "orange", meaning: "オレンジ", category: "単語" },
+      { text: "program", meaning: "プログラム", category: "単語" },
+      { text: "quiet", meaning: "静かな", category: "単語" },
+      { text: "rainbow", meaning: "虹", category: "単語" },
+      { text: "sunshine", meaning: "日光", category: "単語" },
+      { text: "tiger", meaning: "トラ", category: "単語" },
+      { text: "umbrella", meaning: "傘", category: "単語" },
+      { text: "violet", meaning: "スミレ", category: "単語" },
+      { text: "window", meaning: "窓", category: "単語" },
+      { text: "yellow", meaning: "黄色", category: "単語" },
+      { text: "zebra", meaning: "シマウマ", category: "単語" }
+    ];
+
+    // ==========================================
+    // 2. Markdown＋日本語 厳選100問リスト
+    // 議事録・ドキュメント作成で多用するShift記号＋日本語ローマ字
+    // ==========================================
+    const MARKDOWN_WORD_LIST = [
+      // --- 【見出し・セクション】 ---
+      { text: "# gizi", meaning: "【大見出し】# 議題", category: "見出し" },
+      { text: "# honzitunogidai", meaning: "【大見出し】# 本日の議題", category: "見出し" },
+      { text: "## ketteizikou", meaning: "【中見出し】## 決定事項", category: "見出し" },
+      { text: "## kyoudounissi", meaning: "【中見出し】## 共有事項", category: "見出し" },
+      { text: "### syusseki", meaning: "【小見出し】### 出席者", category: "見出し" },
+      { text: "### kesseki", meaning: "【小見出し】### 欠席者", category: "見出し" },
+      { text: "### zikaikaisai", meaning: "【小見出し】### 次回開催日時", category: "見出し" },
+      { text: "# purozyekuto", meaning: "【大見出し】# プロジェクト進捗", category: "見出し" },
+      { text: "## kadaiitiran", meaning: "【中見出し】## 課題一覧", category: "見出し" },
+      { text: "### situgitoutou", meaning: "【小見出し】### 質疑応答", category: "見出し" },
+      { text: "# souryokukensa", meaning: "【大見出し】# 総括報告", category: "見出し" },
+      { text: "## sinntyokukyouyuu", meaning: "【中見出し】## 進捗共有", category: "見出し" },
+      { text: "### honnzitunogoal", meaning: "【小見出し】### 本日のゴール", category: "見出し" },
+      { text: "#### hosokuzikou", meaning: "【極小見出し】#### 補足事項", category: "見出し" },
+      { text: "# teireikaigi", meaning: "【大見出し】# 定例会議", category: "見出し" },
+
+      // --- 【リスト・箇条書き（* / -）】 ---
+      { text: "* tanaka", meaning: "【リスト】* 田中（進行役）", category: "箇条書き" },
+      { text: "* yamada", meaning: "【リスト】* 山田（開発）", category: "箇条書き" },
+      { text: "* satou", meaning: "【リスト】* 佐藤（書記）", category: "箇条書き" },
+      { text: "- suisin", meaning: "【リスト】 - 推進計画", category: "箇条書き" },
+      { text: "- yosan", meaning: "【リスト】 - 予算確保", category: "箇条書き" },
+      { text: "* youken", meaning: "【リスト】* 要件定義の確認", category: "箇条書き" },
+      { text: "* sekkei", meaning: "【リスト】* 設計レビュー完了", category: "箇条書き" },
+      { text: "- tesuto", meaning: "【リスト】 - テスト計画策定", category: "箇条書き" },
+      { text: "* rilease", meaning: "【リスト】* リリース予定日", category: "箇条書き" },
+      { text: "- unyou", meaning: "【リスト】 - 運用体制の整備", category: "箇条書き" },
+
+      // --- 【TODO・タスク（- [ ] / - [x]）】 ---
+      { text: "- [ ] tasuku", meaning: "【未完了】 - [ ] 未着手タスク", category: "TODO" },
+      { text: "- [ ] mitumori", meaning: "【未完了】 - [ ] 見積書の作成", category: "TODO" },
+      { text: "- [ ] siryou", meaning: "【未完了】 - [ ] 資料共有", category: "TODO" },
+      { text: "- [ ] renraku", meaning: "【未完了】 - [ ] 先方へ連絡", category: "TODO" },
+      { text: "- [ ] kakunin", meaning: "【未完了】 - [ ] 仕様の確認", category: "TODO" },
+      { text: "- [x] kanryou", meaning: "【完了】 - [x] 議事録の送付完了", category: "TODO" },
+      { text: "- [x] syounin", meaning: "【完了】 - [x] 上長承認済み", category: "TODO" },
+      { text: "- [x] kaisou", meaning: "【完了】 - [x] 招待メール送信", category: "TODO" },
+      { text: "- [ ] tesutojisshi", meaning: "【未完了】 - [ ] 単体テスト実施", category: "TODO" },
+      { text: "- [ ] deploy", meaning: "【未完了】 - [ ] 本番デプロイ", category: "TODO" },
+      { text: "- [ ] henhkou", meaning: "【未完了】 - [ ] 設定変更の適用", category: "TODO" },
+      { text: "- [x] ma-zi", meaning: "【完了】 - [x] プルリクのマージ", category: "TODO" },
+      { text: "- [ ] kousin", meaning: "【未完了】 - [ ] ドキュメント更新", category: "TODO" },
+      { text: "- [x] kaikei", meaning: "【完了】 - [x] 経費精算の提出", category: "TODO" },
+      { text: "- [ ] bakkuaxtupu", meaning: "【未完了】 - [ ] バックアップ取得", category: "TODO" },
+
+      // --- 【太字・強調（**テキスト**）】 ---
+      { text: "**zyuuyou**", meaning: "【太字強調】 **重要**", category: "強調" },
+      { text: "**sikyuu**", meaning: "【太字強調】 **至急対応**", category: "強調" },
+      { text: "**hissyu**", meaning: "【太字強調】 **期限厳守**", category: "強調" },
+      { text: "**kettei**", meaning: "【太字強調】 **全会一致で決定**", category: "強調" },
+      { text: "**tyuui**", meaning: "【太字強調】 **取扱注意**", category: "強調" },
+      { text: "**ng**", meaning: "【太字強調】 **今回は見送り(NG)**", category: "強調" },
+      { text: "**ok**", meaning: "【太字強調】 **承認完了(OK)**", category: "強調" },
+      { text: "**gentei**", meaning: "【太字強調】 **社内限定共有**", category: "強調" },
+      { text: "**sakuseityuu**", meaning: "【太字強調】 **ドラフト作成中**", category: "強調" },
+      { text: "**minaosi**", meaning: "【太字強調】 **要再検討**", category: "強調" },
+
+      // --- 【斜体・取り消し線（*斜体* / ~~取消~~）】 ---
+      { text: "*hosoku*", meaning: "【イタリック】 *補足事項*", category: "装飾" },
+      { text: "*sannkou*", meaning: "【イタリック】 *参考資料*", category: "装飾" },
+      { text: "*memorandamu*", meaning: "【イタリック】 *覚書*", category: "装飾" },
+      { text: "~~kyannseru~~", meaning: "【取消線】 ~~予定キャンセル~~", category: "装飾" },
+      { text: "~~sakujo~~", meaning: "【取消線】 ~~旧案を削除~~", category: "装飾" },
+      { text: "~~tyuusi~~", meaning: "【取消線】 ~~一旦中断~~", category: "装飾" },
+      { text: "~~kousinmae~~", meaning: "【取消線】 ~~改定前ルール~~", category: "装飾" },
+
+      // --- 【引用（> テキスト）】 ---
+      { text: "> youbou", meaning: "【引用】 > クライアントからの要望", category: "引用" },
+      { text: "> situmon", meaning: "【引用】 > ユーザーからの質問", category: "引用" },
+      { text: "> kibou", meaning: "【引用】 > 納期の希望は今月末", category: "引用" },
+      { text: "> memo", meaning: "【引用】 > 会議中の口頭メモ", category: "引用" },
+      { text: "> siryoubassui", meaning: "【引用】 > 企画書からの抜粋", category: "引用" },
+      { text: "> kitizyou", meaning: "【引用】 > 規約第3条より引用", category: "引用" },
+      { text: "> tyuukoku", meaning: "【引用】 > セキュリティ警告文", category: "引用" },
+      { text: "> tuuka", meaning: "【引用】 > 審査通過のお知らせ", category: "引用" },
+
+      // --- 【インラインコード・コマンド（`code`）】 ---
+      { text: "`npm start`", meaning: "【コード】 `npm start` (起動)", category: "コード" },
+      { text: "`git pull`", meaning: "【コード】 `git pull` (最新取得)", category: "コード" },
+      { text: "`git commit`", meaning: "【コード】 `git commit` (保存)", category: "コード" },
+      { text: "`python main.py`", meaning: "【コード】 `python main.py`", category: "コード" },
+      { text: "`docker compose`", meaning: "【コード】 `docker compose up`", category: "コード" },
+      { text: "`const`", meaning: "【コード】 `const` (定数定義)", category: "コード" },
+      { text: "`let data`", meaning: "【コード】 `let data` (変数)", category: "コード" },
+      { text: "`true`", meaning: "【コード】 `true` (真理値)", category: "コード" },
+      { text: "`false`", meaning: "【コード】 `false` (偽)", category: "コード" },
+      { text: "`id`", meaning: "【コード】 `id` (識別子)", category: "コード" },
+      { text: "`status`", meaning: "【コード】 `status` (状態コード)", category: "コード" },
+      { text: "`return`", meaning: "【コード】 `return` (返却)", category: "コード" },
+
+      // --- 【表組み・区切り線（| / ---）】 ---
+      { text: "| namae |", meaning: "【テーブル列】 | 氏名 |", category: "テーブル" },
+      { text: "| tantou |", meaning: "【テーブル列】 | 担当業務 |", category: "テーブル" },
+      { text: "| kigen |", meaning: "【テーブル列】 | 完了期限 |", category: "テーブル" },
+      { text: "| zyoutai |", meaning: "【テーブル列】 | 進捗状況 |", category: "テーブル" },
+      { text: "| --- |", meaning: "【テーブル区切り】 | --- |", category: "テーブル" },
+      { text: "| :---: |", meaning: "【テーブル中央揃え】 | :---: |", category: "テーブル" },
+      { text: "---", meaning: "【水平線・区切り】 ---", category: "区切り" },
+      { text: "***", meaning: "【水平区切り線】 ***", category: "区切り" },
+
+      // --- 【リンク・注釈（[文字](url)）】 ---
+      { text: "[gizi](url)", meaning: "【リンク】 [議事録フォルダ](url)", category: "リンク" },
+      { text: "[siryou](url)", meaning: "【リンク】 [提出資料](url)", category: "リンク" },
+      { text: "[github](url)", meaning: "【リンク】 [リポジトリ](url)", category: "リンク" },
+      { text: "[figma](url)", meaning: "【リンク】 [デザイン確認](url)", category: "リンク" },
+      { text: "[notion](url)", meaning: "【リンク】 [社内Wiki](url)", category: "リンク" },
+
+      // --- 【議事録・実践フレーズ】 ---
+      { text: "# kettei: a an", meaning: "【議事録】 # 決定: A案を採用", category: "実践" },
+      { text: "* jikai: raisyuu", meaning: "【議事録】 * 次回: 来週水曜10時", category: "実践" },
+      { text: "> gizi: sakuseityuu", meaning: "【議事録】 > 議事録: 本日中送付", category: "実践" },
+      { text: "- [ ] tanaka: teisyutu", meaning: "【議事録】 - [ ] 田中: 資料提出", category: "実践" },
+      { text: "- [ ] satou: kakunin", meaning: "【議事録】 - [ ] 佐藤: 契約書確認", category: "実践" },
+      { text: "- [ ] yamada: koukai", meaning: "【議事録】 - [ ] 山田: 本番公開", category: "実践" },
+      { text: "## go-i: kanryou", meaning: "【議事録】 ## 合意: 全体合意完了", category: "実践" },
+      { text: "### kousin: kanryou", meaning: "【議事録】 ### 更新: 作業完了", category: "実践" },
+      { text: "**horyuu: yosanmati**", meaning: "【議事録】 **保留: 予算承認待ち**", category: "実践" },
+      { text: "* kaisai: onrain", meaning: "【議事録】 * 開催形式: オンライン", category: "実践" },
+      { text: "`api/v1/users`", meaning: "【APIエンドポイント】 `api/v1/users`", category: "コード" },
+      { text: "# seika: kansei", meaning: "【議事録】 # 成果物: 初版完成", category: "実践" },
+      { text: "- [x] check: sumi", meaning: "【議事録】 - [x] レビュー完了", category: "実践" },
+      { text: "## kensyou: ok", meaning: "【議事録】 ## 動作検証: 問題なし", category: "実践" },
+      { text: "> memo: jikai", meaning: "【議事録】 > 次回アジェンダ確定", category: "実践" },
+      { text: "* sansyou: link", meaning: "【議事録】 * 参照リンク添付", category: "実践" }
+    ];
+
+    // キーボードレイアウト定義 (JIS/US混合・視覚配置)
+    const KEY_ROWS = [
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "^", { label: "Backspace", code: "backspace", class: "key-backspace" }],
+      [{ label: "Tab", code: "tab", class: "key-tab" }, "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "@", "["],
+      [{ label: "Caps", code: "capslock", class: "key-caps" }, "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", ":", { label: "Enter", code: "enter", class: "key-enter" }],
+      [{ label: "Shift", code: "shiftleft", class: "key-shift" }, "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "]", { label: "Shift", code: "shiftright", class: "key-shift" }],
+      [{ label: "Space", code: "space", class: "key-space" }]
+    ];
+
+    // Shift同時押し記号と基本キーの対応マップ（ハイライト案内用）
+    const SYMBOL_KEY_MAP = {
+      "!": "1", '"': "2", "#": "3", "$": "4", "%": "5", "&": "6", "'": "7",
+      "(": "8", ")": "9", "=": "-", "~": "^", "|": "]", "`": "@",
+      "{": "[", "+": ";", "*": ":", "}": "]", "<": ",", ">": ".", "?": "/", "_": "_"
+    };
+
+    // 状態管理
+    let currentMode = "normal"; // "normal" または "markdown"
+    let currentList = NORMAL_WORD_LIST;
+    let currentWordIndex = 0;
+    let currentCharIndex = 0;
+    let score = 0;
+    let correctCount = 0;
+    let missCount = 0;
+    let keyElementsMap = {}; // キーとDOM要素のマッピング
+    let lastMistakeEl = null; // ★間違えたキーのDOM（次回正解まで保持）
+
+    // DOM要素
+    const wordDisplay = document.getElementById("word-display");
+    const wordMeaning = document.getElementById("word-meaning");
+    const wordCategory = document.getElementById("word-category");
+    const typingArea = document.getElementById("typing-area");
+    const keyboardEl = document.getElementById("keyboard");
+    const scoreEl = document.getElementById("score");
+    const missCountEl = document.getElementById("miss-count");
+    const accuracyEl = document.getElementById("accuracy");
+    const progressValEl = document.getElementById("progress-val");
+    const currentModeLabelEl = document.getElementById("current-mode-label");
+    const btnModeNormal = document.getElementById("btn-mode-normal");
+    const btnModeMarkdown = document.getElementById("btn-mode-markdown");
+
+    // モード切り替えリスナー
+    btnModeNormal.addEventListener("click", () => switchMode("normal"));
+    btnModeMarkdown.addEventListener("click", () => switchMode("markdown"));
+
+    function switchMode(mode) {
+      if (currentMode === mode) return;
+      currentMode = mode;
+
+      if (mode === "normal") {
+        currentList = NORMAL_WORD_LIST;
+        btnModeNormal.classList.add("active");
+        btnModeMarkdown.classList.remove("active");
+        currentModeLabelEl.textContent = "通常英単語";
+      } else {
+        currentList = MARKDOWN_WORD_LIST;
+        btnModeMarkdown.classList.add("active");
+        btnModeNormal.classList.remove("active");
+        currentModeLabelEl.textContent = "Markdown (100問)";
+      }
+
+      // 状態リセット
+      currentWordIndex = 0;
+      currentCharIndex = 0;
+      score = 0;
+      correctCount = 0;
+      missCount = 0;
+      clearMistakeKey();
+
+      updateDisplay();
+      updateStats();
+    }
+
+    // Web Audio API で本格的なクリッキー（メカニカルスイッチ風）打鍵音を合成
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playClickSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const t = audioCtx.currentTime;
+
+      const clickLen = Math.floor(audioCtx.sampleRate * 0.007);
+      const clickBuf = audioCtx.createBuffer(1, clickLen, audioCtx.sampleRate);
+      const clickData = clickBuf.getChannelData(0);
+      for (let i = 0; i < clickLen; i++) {
+        clickData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.0012));
+      }
+      const clickSrc = audioCtx.createBufferSource();
+      clickSrc.buffer = clickBuf;
+
+      const clickFilter = audioCtx.createBiquadFilter();
+      clickFilter.type = "bandpass";
+      clickFilter.frequency.setValueAtTime(4500, t);
+      clickFilter.Q.setValueAtTime(4.0, t);
+
+      const clickGain = audioCtx.createGain();
+      clickGain.gain.setValueAtTime(0.5, t);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.007);
+
+      clickSrc.connect(clickFilter);
+      clickFilter.connect(clickGain);
+      clickGain.connect(audioCtx.destination);
+      clickSrc.start(t);
+
+      const osc = audioCtx.createOscillator();
+      const oscGain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(650, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.028);
+
+      oscGain.gain.setValueAtTime(0.3, t);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.028);
+
+      osc.connect(oscGain);
+      oscGain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.03);
+    }
+
+    function playEnterSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const t = audioCtx.currentTime;
+
+      const clickLen = Math.floor(audioCtx.sampleRate * 0.012);
+      const clickBuf = audioCtx.createBuffer(1, clickLen, audioCtx.sampleRate);
+      const clickData = clickBuf.getChannelData(0);
+      for (let i = 0; i < clickLen; i++) {
+        clickData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.002));
+      }
+      const clickSrc = audioCtx.createBufferSource();
+      clickSrc.buffer = clickBuf;
+
+      const clickFilter = audioCtx.createBiquadFilter();
+      clickFilter.type = "bandpass";
+      clickFilter.frequency.setValueAtTime(3600, t);
+      clickFilter.Q.setValueAtTime(2.5, t);
+
+      const clickGain = audioCtx.createGain();
+      clickGain.gain.setValueAtTime(0.6, t);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+
+      clickSrc.connect(clickFilter);
+      clickFilter.connect(clickGain);
+      clickGain.connect(audioCtx.destination);
+      clickSrc.start(t);
+
+      const osc = audioCtx.createOscillator();
+      const oscGain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.07);
+
+      oscGain.gain.setValueAtTime(0.45, t);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+      osc.connect(oscGain);
+      oscGain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.075);
+    }
+
+    function playMissSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(70, t + 0.15);
+
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    }
+
+    // キーボードのDOM構築
+    function buildKeyboard() {
+      keyboardEl.innerHTML = "";
+      keyElementsMap = {};
+
+      KEY_ROWS.forEach(row => {
+        const rowEl = document.createElement("div");
+        rowEl.className = "keyboard-row";
+
+        row.forEach(item => {
+          const keyEl = document.createElement("div");
+          keyEl.className = "key";
+
+          let label = "";
+          let code = "";
+
+          if (typeof item === "string") {
+            label = item.toUpperCase();
+            code = item.toLowerCase();
+          } else {
+            label = item.label;
+            code = item.code.toLowerCase();
+            if (item.class) keyEl.classList.add(item.class);
+          }
+
+          if (code === "f" || code === "j") {
+            keyEl.classList.add("home-key");
+          }
+
+          keyEl.textContent = label;
+          keyEl.dataset.key = code;
+
+          keyElementsMap[code] = keyEl;
+          rowEl.appendChild(keyEl);
+        });
+
+        keyboardEl.appendChild(rowEl);
+      });
+    }
+
+    // 単語の表示を更新
+    function updateDisplay() {
+      const currentWordObj = currentList[currentWordIndex];
+      const word = currentWordObj.text;
+      
+      wordCategory.textContent = currentWordObj.category || "PRACTICE";
+      wordMeaning.innerHTML = `<span class="md-preview">${escapeHtml(currentWordObj.meaning)}</span>`;
+      progressValEl.textContent = `${currentWordIndex + 1} / ${currentList.length}`;
+
+      let html = "";
+      for (let i = 0; i < word.length; i++) {
+        const ch = word[i];
+        const displayChar = ch === " " ? `<span class="char-space-marker">&nbsp;</span>` : escapeHtml(ch);
+
+        if (i < currentCharIndex) {
+          html += `<span class="char-typed">${displayChar}</span>`;
+        } else if (i === currentCharIndex) {
+          html += `<span class="char-current">${displayChar}</span>`;
+        } else {
+          html += `<span class="char-untyped">${displayChar}</span>`;
+        }
+      }
+      wordDisplay.innerHTML = html;
+
+      // 目標キーのハイライト
+      highlightTargetKey(word[currentCharIndex]);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    // 目標キーを黄色くハイライト
+    function highlightTargetKey(targetChar) {
+      document.querySelectorAll(".key.target").forEach(k => k.classList.remove("target"));
+      if (!targetChar) return;
+
+      let keyToHighlight = targetChar.toLowerCase();
+      let needShift = false;
+
+      if (targetChar === " ") {
+        keyToHighlight = "space";
+      } else if (SYMBOL_KEY_MAP[targetChar]) {
+        keyToHighlight = SYMBOL_KEY_MAP[targetChar];
+        needShift = true;
+      } else if (targetChar >= "A" && targetChar <= "Z") {
+        needShift = true;
+      }
+
+      const targetEl = keyElementsMap[keyToHighlight];
+      if (targetEl) {
+        targetEl.classList.add("target");
+      }
+
+      // Shiftが必要な場合は左Shiftも案内
+      if (needShift) {
+        const shiftEl = keyElementsMap["shiftleft"];
+        if (shiftEl) shiftEl.classList.add("target");
+      }
+    }
+
+    // ★間違えたキーの赤色キープ処理
+    function setMistakeKey(keyEl) {
+      clearMistakeKey();
+      if (keyEl) {
+        keyEl.classList.add("miss-persistent");
+        lastMistakeEl = keyEl;
+      }
+    }
+
+    function clearMistakeKey() {
+      if (lastMistakeEl) {
+        lastMistakeEl.classList.remove("miss-persistent");
+        lastMistakeEl = null;
+      }
+      // 安全のため全体からも解除
+      document.querySelectorAll(".key.miss-persistent").forEach(k => k.classList.remove("miss-persistent"));
+    }
+
+    // 正解時の波紋エフェクト
+    function createRippleEffect() {
+      const ripple = document.createElement("div");
+      ripple.className = "ripple-effect";
+
+      const rect = typingArea.getBoundingClientRect();
+      const x = rect.width / 2;
+      const y = rect.height / 2;
+
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+
+      typingArea.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 700);
+    }
+
+    // スコア情報の更新
+    function updateStats() {
+      scoreEl.textContent = score;
+      missCountEl.textContent = missCount;
+      const total = correctCount + missCount;
+      const acc = total > 0 ? Math.round((correctCount / total) * 100) : 100;
+      accuracyEl.textContent = `${acc}%`;
+    }
+
+    // キー押下イベント
+    window.addEventListener("keydown", (e) => {
+      // ファンクションキーや修飾キー単体はスルー
+      if (e.key === "F5" || e.key === "F12" || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Shift" || e.key === "CapsLock" || e.key === "Tab") return;
+
+      e.preventDefault();
+
+      const currentWordObj = currentList[currentWordIndex];
+      const targetChar = currentWordObj.text[currentCharIndex];
+      const pressedChar = e.key; // そのままの文字 (大文字・小文字・記号・Space)
+
+      // 押されたキーのDOM特定
+      let pressedKeyId = e.key.toLowerCase();
+      if (e.key === " ") pressedKeyId = "space";
+      else if (SYMBOL_KEY_MAP[e.key]) pressedKeyId = SYMBOL_KEY_MAP[e.key];
+
+      const pressedEl = keyElementsMap[pressedKeyId] || keyElementsMap[e.code.toLowerCase()];
+
+      // 入力判定
+      const isCorrect = (pressedChar === targetChar) || 
+                        (targetChar === " " && e.key === " ") ||
+                        (pressedChar.toLowerCase() === targetChar.toLowerCase() && currentMode === "normal");
+
+      if (isCorrect) {
+        // ★正解！ 前回残っていた赤色ミス表示を消去
+        clearMistakeKey();
+
+        correctCount++;
+        score += 10;
+        currentCharIndex++;
+
+        // 一瞬緑〜赤のパルス
+        if (pressedEl) {
+          pressedEl.classList.add("pressed-active");
+          setTimeout(() => pressedEl.classList.remove("pressed-active"), 160);
+        }
+
+        createRippleEffect();
+
+        // 単語完走判定
+        if (currentCharIndex >= currentWordObj.text.length) {
+          playEnterSound();
+
+          const enterEl = keyElementsMap["enter"];
+          if (enterEl) {
+            enterEl.classList.add("pressed-active");
+            setTimeout(() => enterEl.classList.remove("pressed-active"), 200);
+          }
+
+          score += 50;
+          currentWordIndex = (currentWordIndex + 1) % currentList.length;
+          currentCharIndex = 0;
+        } else {
+          playClickSound();
+        }
+      } else {
+        // ★ミス！ 押したキーを赤く光らせて、次回正解までキープ
+        missCount++;
+        playMissSound();
+
+        if (pressedEl) {
+          setMistakeKey(pressedEl);
+        }
+      }
+
+      updateDisplay();
+      updateStats();
+    });
+
+    // 初期化
+    buildKeyboard();
+    updateDisplay();
+    updateStats();
+  </script>
+</body>
+</html>
